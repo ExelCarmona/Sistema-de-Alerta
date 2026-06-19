@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estación Climatológica - Open-Meteo & Hexagonal</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for beautiful charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="background-decorations">
+        <div class="circle circle-1"></div>
+        <div class="circle circle-2"></div>
+        <div class="circle circle-3"></div>
+    </div>
+
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="main-header">
+            <div class="logo">
+                <i class="fa-solid fa-cloud-sun-rain logo-icon"></i>
+                <div class="logo-text">
+                    <h1>MeteoHex</h1>
+                    <span>Monitoreo Climatológico Local</span>
+                </div>
+            </div>
+            <div class="status-indicator">
+                <span class="pulse-dot"></span>
+                <span>Base de Datos SQLite Activa</span>
+            </div>
+        </header>
+
+        <div class="grid-layout">
+            <!-- Sidebar: Locations Management -->
+            <aside class="sidebar glass-panel">
+                <h2 class="section-title"><i class="fa-solid fa-map-location-dot"></i> Ubicaciones</h2>
+                
+                <!-- Add Location Form -->
+                <div class="add-location-box">
+                    <h3>Registrar Nueva Zona</h3>
+                    <form id="add-location-form" class="inline-form">
+                        <div class="input-group">
+                            <label for="input-lat">Latitud</label>
+                            <input type="number" id="input-lat" step="any" min="-90" max="90" placeholder="Ej. 40.416" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="input-lon">Longitud</label>
+                            <input type="number" id="input-lon" step="any" min="-180" max="180" placeholder="Ej. -3.703" required>
+                        </div>
+                        <button type="submit" class="btn-primary" id="btn-add">
+                            <i class="fa-solid fa-plus"></i> Añadir
+                        </button>
+                    </form>
+                    <div id="add-error" class="error-msg hidden"></div>
+                </div>
+
+                <!-- Locations List -->
+                <div class="locations-list-wrapper">
+                    <h3>Zonas Guardadas</h3>
+                    <div id="locations-loader" class="loader hidden">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Cargando...
+                    </div>
+                    <ul id="locations-list" class="locations-list">
+                        <!-- Populated by JS -->
+                    </ul>
+                </div>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="main-content">
+                <!-- Select location prompt -->
+                <div id="no-location-selected" class="glass-panel welcome-panel">
+                    <i class="fa-solid fa-satellite-dish welcome-icon"></i>
+                    <h2>Visualizador Climatológico Hexagonal</h2>
+                    <p>Selecciona una ubicación de la lista o añade nuevas coordenadas para consultar el clima actual y las proyecciones desde la base de datos sincronizada con Open-Meteo.</p>
+                </div>
+
+                <!-- Weather Data Display -->
+                <div id="weather-display" class="hidden-fade">
+                    
+                    <!-- Top stats cards -->
+                    <div class="weather-summary-grid">
+                        
+                        <!-- Main weather status card -->
+                        <div class="glass-panel main-weather-card">
+                            <div class="card-header-actions">
+                                <span class="location-badge" id="location-name">Madrid, ES</span>
+                                <button class="btn-icon" id="btn-sync" title="Sincronizar con API externa">
+                                    <i class="fa-solid fa-rotate" id="sync-icon"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="main-temp-wrapper">
+                                <div class="weather-emoji" id="current-emoji">☀️</div>
+                                <div class="temp-number">
+                                    <span id="current-temp">--</span><span class="temp-unit">°C</span>
+                                </div>
+                            </div>
+                            
+                            <div class="weather-desc-text" id="current-desc">Cielo Despejado</div>
+                            
+                            <div class="location-metadata">
+                                <div><i class="fa-solid fa-earth-americas"></i> Coordenadas: <span id="meta-coords">--</span></div>
+                                <div><i class="fa-solid fa-mountain"></i> Elevación: <span id="meta-elevation">--</span> m</div>
+                                <div><i class="fa-solid fa-clock"></i> Zona Horaria: <span id="meta-timezone">--</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Side mini cards -->
+                        <div class="sub-stats-grid">
+                            <div class="glass-panel stat-card">
+                                <div class="stat-icon"><i class="fa-solid fa-droplet"></i></div>
+                                <div class="stat-info">
+                                    <span class="stat-label">Humedad Relativa</span>
+                                    <span class="stat-value" id="stat-humidity">-- %</span>
+                                </div>
+                            </div>
+                            <div class="glass-panel stat-card">
+                                <div class="stat-icon"><i class="fa-solid fa-wind"></i></div>
+                                <div class="stat-info">
+                                    <span class="stat-label">Viento (10m)</span>
+                                    <span class="stat-value" id="stat-wind">-- km/h</span>
+                                </div>
+                            </div>
+                            <div class="glass-panel stat-card">
+                                <div class="stat-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                                <div class="stat-info">
+                                    <span class="stat-label">Último Reporte</span>
+                                    <span class="stat-value" id="stat-time">--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts / Forecast Section -->
+                    <div class="charts-section">
+                        <!-- Hourly Chart Card -->
+                        <div class="glass-panel chart-card">
+                            <div class="chart-header">
+                                <h2><i class="fa-solid fa-chart-line"></i> Temperatura por Horas (Siguientes 24h)</h2>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="hourlyChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Daily Forecast Card -->
+                        <div class="glass-panel chart-card">
+                            <div class="chart-header">
+                                <h2><i class="fa-solid fa-chart-bar"></i> Pronóstico Diario (7 Días)</h2>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="dailyChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast hidden">
+        <i class="fa-solid fa-circle-check toast-icon"></i>
+        <span id="toast-message">Mensaje de éxito</span>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
