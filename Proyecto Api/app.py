@@ -29,6 +29,7 @@ from aplicacion.casos_uso.sincronizar_clima import CasoUsoSincronizarClima
 from aplicacion.casos_uso.registrar_clima_manual import CasoUsoRegistrarClimaManual
 from aplicacion.casos_uso.consultar_clima import CasoUsoConsultarClima
 from aplicacion.casos_uso.obtener_recomendaciones import CasoUsoObtenerRecomendaciones
+from dominio.reglas import MotorRecomendacion
 from adaptadores.controladores.controlador_streamlit import arrancar_interfaz
 
 @st.cache_resource
@@ -40,11 +41,13 @@ def inicializar_dependencias():
     repositorio = RepositorioClimaSQLite(ruta_bd=RUTA_BD)
     api_externa = AdaptadorApiOpenMeteo()
 
+    motor_recomendacion = MotorRecomendacion()
+
     return {
         "sincronizar": CasoUsoSincronizarClima(repositorio=repositorio, api_clima=api_externa),
         "registrar_manual": CasoUsoRegistrarClimaManual(repositorio=repositorio),
         "consultar": CasoUsoConsultarClima(repositorio=repositorio),
-        "recomendaciones": CasoUsoObtenerRecomendaciones(repositorio=repositorio),
+        "recomendaciones": CasoUsoObtenerRecomendaciones(repositorio=repositorio, motor_recomendacion=motor_recomendacion),
     }
 
 # Iniciar aplicación

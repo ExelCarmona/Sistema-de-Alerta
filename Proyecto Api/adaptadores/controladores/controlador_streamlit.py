@@ -100,7 +100,7 @@ def mostrar_dashboard(caso_consultar: CasoUsoConsultarClima):
                         chart_data = {"Temperatura (°C)": [d[1] for d in datos_grafico]}
                         st.line_chart(
                             data=chart_data,
-                            use_container_width=True,
+                            width="stretch",
                             color=["#38bdf8"]
                         )
                     else:
@@ -114,7 +114,7 @@ def mostrar_dashboard(caso_consultar: CasoUsoConsultarClima):
                     lluvias = [r.suma_precipitacion if r.suma_precipitacion is not None else 0 for r in registro.clima_diario]
                     st.bar_chart(
                         data={"Precipitación (mm)": lluvias},
-                        use_container_width=True,
+                        width="stretch",
                         color=["#06b6d4"]
                     )
                 else:
@@ -135,7 +135,7 @@ def mostrar_dashboard(caso_consultar: CasoUsoConsultarClima):
                         "Precipitación (mm)": d.suma_precipitacion,
                     })
                 df = pd.DataFrame(filas)
-                st.dataframe(df, use_container_width=True, hide_index=True)
+                st.dataframe(df, width="stretch", hide_index=True)
             else:
                 st.caption("No hay registros diarios guardados.")
 
@@ -148,13 +148,13 @@ def mostrar_sincronizacion(caso_sincronizar: CasoUsoSincronizarClima):
         st.markdown("#### 📍 Coordenadas de Búsqueda")
         c1, c2 = st.columns(2)
         with c1:
-            latitud = st.number_input("Latitud", value=19.4326, min_value=-90.0, max_value=90.0, format="%.6f",
-                                       help="Ej: 19.4326 = Ciudad de México")
+            latitud = st.number_input("Latitud", value=12.4326, min_value=-90.0, max_value=90.0, format="%.6f",
+                                       help="Ej: 12.4326 = Ciudad de Ciudad de Panamá, Panamá")
         with c2:
-            longitud = st.number_input("Longitud", value=-99.1332, min_value=-180.0, max_value=180.0, format="%.6f",
-                                        help="Ej: -99.1332 = Ciudad de México")
+            longitud = st.number_input("Longitud", value=-86.1332, min_value=-180.0, max_value=180.0, format="%.6f",
+                                        help="Ej: -86.1332 = Ciudad de Managua, Nicaragua")
 
-        submitted = st.form_submit_button("🔄 Consultar y Sincronizar con Open-Meteo", use_container_width=True)
+        submitted = st.form_submit_button("🔄 Consultar y Sincronizar con Open-Meteo", width="stretch")
 
     if submitted:
         with st.spinner("⏳ Conectando con la API de Open-Meteo y guardando datos..."):
@@ -211,7 +211,7 @@ def mostrar_sincronizacion(caso_sincronizar: CasoUsoSincronizarClima):
                             "Mín (°C)": d.temperatura_2m_min,
                             "Precipitación (mm)": d.suma_precipitacion,
                         })
-                    st.dataframe(pd.DataFrame(filas), use_container_width=True, hide_index=True)
+                    st.dataframe(pd.DataFrame(filas), width="stretch", hide_index=True)
 
             except RuntimeError as e:
                 st.error(f"❌ Error de conexión con Open-Meteo: {e}")
@@ -241,13 +241,13 @@ def mostrar_registro_manual(caso_registrar: CasoUsoRegistrarClimaManual, caso_co
         with st.form("form_localizacion"):
             c1, c2 = st.columns(2)
             with c1:
-                lat_m = st.number_input("Latitud *", value=20.9670, format="%.6f")
-                zona_m = st.text_input("Zona Horaria", value="America/Mexico_City", placeholder="Ej: Europe/Madrid")
+                lat_m = st.number_input("Latitud *", value=12.9670, format="%.6f")
+                zona_m = st.text_input("Zona Horaria", value="America/Managua", placeholder="Ej: Europe/Madrid")
             with c2:
-                lon_m = st.number_input("Longitud *", value=-89.6237, format="%.6f")
+                lon_m = st.number_input("Longitud *", value=-86.6237, format="%.6f")
                 utc_off = st.number_input("UTC Offset (segundos)", value=-18000)
             elev_m = st.number_input("Elevación (m)", value=10.0, format="%.1f")
-            sub = st.form_submit_button("💾 Guardar Localización", use_container_width=True)
+            sub = st.form_submit_button("💾 Guardar Localización", width="stretch")
 
         if sub:
             try:
@@ -275,7 +275,7 @@ def mostrar_registro_manual(caso_registrar: CasoUsoRegistrarClimaManual, caso_co
                 with c2:
                     cod_a = st.number_input("Código de Clima", value=0, min_value=0, max_value=99, step=1)
                     viento_a = st.number_input("Velocidad de Viento 10m (km/h)", value=10.0, format="%.1f")
-                sub_a = st.form_submit_button("💾 Guardar Clima Actual", use_container_width=True)
+                sub_a = st.form_submit_button("💾 Guardar Clima Actual", width="stretch")
 
             if sub_a:
                 try:
@@ -307,7 +307,7 @@ def mostrar_registro_manual(caso_registrar: CasoUsoRegistrarClimaManual, caso_co
                 with c2:
                     precip_h = st.number_input("Precipitación (mm)", value=0.0, format="%.2f")
                     cod_h = st.number_input("Código de Clima", value=0, min_value=0, max_value=99, step=1)
-                sub_h = st.form_submit_button("💾 Guardar Clima Horario", use_container_width=True)
+                sub_h = st.form_submit_button("💾 Guardar Clima Horario", width="stretch")
 
             if sub_h:
                 try:
@@ -338,7 +338,7 @@ def mostrar_registro_manual(caso_registrar: CasoUsoRegistrarClimaManual, caso_co
                 with c2:
                     temp_min_d = st.number_input("Temperatura Mínima (°C)", value=15.0, format="%.1f")
                     precip_d = st.number_input("Suma Precipitación (mm)", value=0.0, format="%.2f")
-                sub_d = st.form_submit_button("💾 Guardar Clima Diario", use_container_width=True)
+                sub_d = st.form_submit_button("💾 Guardar Clima Diario", width="stretch")
 
             if sub_d:
                 try:
@@ -371,7 +371,7 @@ def mostrar_recomendaciones(caso_recomendaciones: CasoUsoObtenerRecomendaciones,
 
         id_localizacion = opciones[seleccion]
 
-        if st.button("🔍 Analizar y Generar Recomendaciones", use_container_width=False):
+        if st.button("🔍 Analizar y Generar Recomendaciones", width="content"):
             resultado = caso_recomendaciones.ejecutar(id_localizacion=id_localizacion, limite_dias=int(limite))
 
             if not resultado["recomendaciones"]:
