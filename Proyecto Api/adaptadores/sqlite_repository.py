@@ -1,23 +1,23 @@
 import sqlite3
 from typing import List, Optional
 from dominio.entidades import Localizacion, ClimaActual, ClimaHorario, ClimaDiario
-from puertos.repositorio import ClimaRepositoryPort
+from aplicacion.puertos.repositorio import PuertoRepositorioClima
 
-class SQLiteClimaRepository(ClimaRepositoryPort):
+class RepositorioClimaSQLite(PuertoRepositorioClima):
     """
-    Adaptador secundario de persistencia. Implementa ClimaRepositoryPort para interactuar
+    Adaptador secundario de persistencia. Implementa PuertoRepositorioClima para interactuar
     con el archivo SQLite local (openmeteo_clima.db).
     """
 
-    def __init__(self, db_path: str):
-        self.db_path = db_path
+    def __init__(self, ruta_bd: str):
+        self.ruta_bd = ruta_bd
 
     def guardar_localizacion(self, localizacion: Localizacion) -> int:
         # Buscar primero si ya existe una localización cercana para evitar duplicar
         loc_existente = self.obtener_localizacion_por_coordenadas(localizacion.latitud, localizacion.longitud)
         
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        conexion = sqlite3.connect(self.ruta_bd)
+        cursor = conexion.cursor()
         try:
             if loc_existente:
                 # Actualizar los valores en caso de que existan datos nuevos
@@ -30,7 +30,7 @@ class SQLiteClimaRepository(ClimaRepositoryPort):
                     (localizacion.elevacion, localizacion.zona_horaria, localizacion.utc_offset_segundos, loc_existente.id)
                 )
                 localizacion.id = loc_existente.id
-                conn.commit()
+                conexion.commit()
                 return loc_existente.id
             else:
                 # Insertar nuevo registro
@@ -41,16 +41,16 @@ class SQLiteClimaRepository(ClimaRepositoryPort):
                     """,
                     (localizacion.latitud, localizacion.longitud, localizacion.elevacion, localizacion.zona_horaria, localizacion.utc_offset_segundos)
                 )
-                localizacion_id = cursor.lastrowid
-                localizacion.id = localizacion_id
-                conn.commit()
-                return localizacion_id
+                id_localizacion = cursor.lastrowid
+                localizacion.id = id_localizacion
+                conexion.commit()
+                return id_localizacion
         finally:
-            conn.close()
+            conexion.close()
 
-    def obtener_localizacion_por_id(self, localizacion_id: int) -> Optional[Localizacion]:
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+    def obtener_localizacion_por_id(self, id_localizacion: int) -> Optional[Localizacion]:
+        conexion = sqlite3.connect(self.ruta_bd)
+        cursor = conexion.cursor()
         try:
             cursor.execute(
                 """
@@ -58,25 +58,25 @@ class SQLiteClimaRepository(ClimaRepositoryPort):
                 FROM localizaciones 
                 WHERE id = ?
                 """,
-                (localizacion_id,)
+                (id_localizacion,)
             )
-            row = cursor.fetchone()
-            if row:
+            fila = cursor.fetchone()
+            if fila:
                 return Localizacion(
-                    id=row[0],
-                    latitud=row[1],
-                    longitud=row[2],
-                    elevacion=row[3],
-                    zona_horaria=row[4],
-                    utc_offset_segundos=row[5]
+                    id=fila[0],
+                    latitud=fila[1],
+                    longitud=fila[2],
+                    elevacion=fila[3],
+                    zona_horaria=fila[4],
+                    utc_offset_segundos=fila[5]
                 )
             return None
         finally:
-            conn.close()
+            conexion.close()
 
     def obtener_localizacion_por_coordenadas(self, latitud: float, longitud: float) -> Optional[Localizacion]:
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        conexion = sqlite3.connect(self.ruta_bd)
+        cursor = conexion.cursor()
         try:
             # Para evitar problemas de precisión flotante en SQLite, comparamos con un delta pequeño (0.01 grados)
             # Esto también nos permite reutilizar localizaciones si el usuario busca una coordenada muy similar.
@@ -89,23 +89,23 @@ class SQLiteClimaRepository(ClimaRepositoryPort):
                 """,
                 (latitud, longitud)
             )
-            row = cursor.fetchone()
-            if row:
+            fila = cursor.fetchone()
+            if fila:
                 return Localizacion(
-                    id=row[0],
-                    latitud=row[1],
-                    longitud=row[2],
-                    elevacion=row[3],
-                    zona_horaria=row[4],
-                    utc_offset_segundos=row[5]
+                    id=fila[0],
+                    latitud=fila[1],
+                    longitud=fila[2],
+                    elevacion=fila[3],
+                    zona_horaria=fila[4],
+                    utc_offset_segundos=fila[5]
                 )
             return None
         finally:
-            conn.close()
+            conexion.close()
 
     def obtener_todas_localizaciones(self) -> List[Localizacion]:
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        conexion = sqlite3.connect(self.ruta_bd)
+        cursor = conexion.cursor()
         try:
             cursor.execute(
                 """
@@ -114,27 +114,27 @@ class SQLiteClimaRepository(ClimaRepositoryPort):
                 ORDER BY id DESC
                 """
             )
-            rows = cursor.fetchall()
+            filas = cursor.fetchall()
             return [
                 Localizacion(
-                    id=row[0],
-                    latitud=row[1],
-                    longitud=row[2],
-                    elevacion=row[3],
-                    zona_horaria=row[4],
-                    utc_offset_segundos=row[5]
+                    id=fila[0],
+                    latitud=fila[1],
+                    longitud=fila[2],
+                    elevacion=fila[3],
+                    zona_horaria=fila[4],
+                    utc_offset_segundos=fila[5]
                 )
-                for row in rows
+                for fila in filas
             ]
         finally:
-            conn.close()
+            conexion.close()
 
     def guardar_clima_actual(self, clima_actual: ClimaActual) -> None:
-        if clima_actual.localizacion_id is None:
-            raise ValueError("El clima actual debe tener un localizacion_id asignado.")
+        if clima_actual.id_localizacion is None:
+            raise ValueError("El clima actual debe tener un id_localizacion asignado.")
         
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        conexion = sqlite3.connect(self.ruta_bd)
+        cursor = conexion.cursor()
         try:
             cursor.execute(
                 """
@@ -143,7 +143,7 @@ class SQLiteClimaRepository(ClimaRepositoryPort):
                 ) VALUES (?, ?, ?, ?, ?, ?)
                 """,
                 (
-                    clima_actual.localizacion_id,
+                    clima_actual.id_localizacion,
                     clima_actual.tiempo,
                     clima_actual.temperatura_2m,
                     clima_actual.humedad_relativa_2m,
@@ -151,13 +151,13 @@ class SQLiteClimaRepository(ClimaRepositoryPort):
                     clima_actual.velocidad_viento_10m
                 )
             )
-            conn.commit()
+            conexion.commit()
         finally:
-            conn.close()
+            conexion.close()
 
-    def obtener_clima_actual(self, localizacion_id: int) -> Optional[ClimaActual]:
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+    def obtener_clima_actual(self, id_localizacion: int) -> Optional[ClimaActual]:
+        conexion = sqlite3.connect(self.ruta_bd)
+        cursor = conexion.cursor()
         try:
             cursor.execute(
                 """
@@ -165,28 +165,28 @@ class SQLiteClimaRepository(ClimaRepositoryPort):
                 FROM clima_actual 
                 WHERE localizacion_id = ?
                 """,
-                (localizacion_id,)
+                (id_localizacion,)
             )
-            row = cursor.fetchone()
-            if row:
+            fila = cursor.fetchone()
+            if fila:
                 return ClimaActual(
-                    tiempo=row[0],
-                    temperatura_2m=row[1],
-                    humedad_relativa_2m=row[2],
-                    codigo_clima=row[3],
-                    velocidad_viento_10m=row[4],
-                    localizacion_id=localizacion_id
+                    tiempo=fila[0],
+                    temperatura_2m=fila[1],
+                    humedad_relativa_2m=fila[2],
+                    codigo_clima=fila[3],
+                    velocidad_viento_10m=fila[4],
+                    id_localizacion=id_localizacion
                 )
             return None
         finally:
-            conn.close()
+            conexion.close()
 
     def guardar_clima_horario(self, registros_horarios: List[ClimaHorario]) -> None:
         if not registros_horarios:
             return
         
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        conexion = sqlite3.connect(self.ruta_bd)
+        cursor = conexion.cursor()
         try:
             cursor.executemany(
                 """
@@ -196,7 +196,7 @@ class SQLiteClimaRepository(ClimaRepositoryPort):
                 """,
                 [
                     (
-                        r.localizacion_id,
+                        r.id_localizacion,
                         r.tiempo,
                         r.temperatura_2m,
                         r.probabilidad_precipitacion,
@@ -206,13 +206,13 @@ class SQLiteClimaRepository(ClimaRepositoryPort):
                     for r in registros_horarios
                 ]
             )
-            conn.commit()
+            conexion.commit()
         finally:
-            conn.close()
+            conexion.close()
 
-    def obtener_clima_horario(self, localizacion_id: int, limite: int = 168) -> List[ClimaHorario]:
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+    def obtener_clima_horario(self, id_localizacion: int, limite: int = 168) -> List[ClimaHorario]:
+        conexion = sqlite3.connect(self.ruta_bd)
+        cursor = conexion.cursor()
         try:
             cursor.execute(
                 """
@@ -222,32 +222,32 @@ class SQLiteClimaRepository(ClimaRepositoryPort):
                 ORDER BY tiempo DESC 
                 LIMIT ?
                 """,
-                (localizacion_id, limite)
+                (id_localizacion, limite)
             )
-            rows = cursor.fetchall()
+            filas = cursor.fetchall()
             # Invertimos el orden para que sea cronológico (ascendente)
-            rows.reverse()
+            filas.reverse()
             return [
                 ClimaHorario(
-                    id=row[0],
-                    tiempo=row[1],
-                    temperatura_2m=row[2],
-                    probabilidad_precipitacion=row[3],
-                    precipitacion=row[4],
-                    codigo_clima=row[5],
-                    localizacion_id=localizacion_id
+                    id=fila[0],
+                    tiempo=fila[1],
+                    temperatura_2m=fila[2],
+                    probabilidad_precipitacion=fila[3],
+                    precipitacion=fila[4],
+                    codigo_clima=fila[5],
+                    id_localizacion=id_localizacion
                 )
-                for row in rows
+                for fila in filas
             ]
         finally:
-            conn.close()
+            conexion.close()
 
     def guardar_clima_diario(self, registros_diarios: List[ClimaDiario]) -> None:
         if not registros_diarios:
             return
         
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        conexion = sqlite3.connect(self.ruta_bd)
+        cursor = conexion.cursor()
         try:
             cursor.executemany(
                 """
@@ -257,7 +257,7 @@ class SQLiteClimaRepository(ClimaRepositoryPort):
                 """,
                 [
                     (
-                        r.localizacion_id,
+                        r.id_localizacion,
                         r.fecha,
                         r.codigo_clima_max,
                         r.temperatura_2m_max,
@@ -267,13 +267,13 @@ class SQLiteClimaRepository(ClimaRepositoryPort):
                     for r in registros_diarios
                 ]
             )
-            conn.commit()
+            conexion.commit()
         finally:
-            conn.close()
+            conexion.close()
 
-    def obtener_clima_diario(self, localizacion_id: int, limite: int = 30) -> List[ClimaDiario]:
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+    def obtener_clima_diario(self, id_localizacion: int, limite: int = 30) -> List[ClimaDiario]:
+        conexion = sqlite3.connect(self.ruta_bd)
+        cursor = conexion.cursor()
         try:
             cursor.execute(
                 """
@@ -283,22 +283,22 @@ class SQLiteClimaRepository(ClimaRepositoryPort):
                 ORDER BY fecha DESC 
                 LIMIT ?
                 """,
-                (localizacion_id, limite)
+                (id_localizacion, limite)
             )
-            rows = cursor.fetchall()
+            filas = cursor.fetchall()
             # Invertimos el orden para que sea cronológico (ascendente)
-            rows.reverse()
+            filas.reverse()
             return [
                 ClimaDiario(
-                    id=row[0],
-                    fecha=row[1],
-                    codigo_clima_max=row[2],
-                    temperatura_2m_max=row[3],
-                    temperatura_2m_min=row[4],
-                    suma_precipitacion=row[5],
-                    localizacion_id=localizacion_id
+                    id=fila[0],
+                    fecha=fila[1],
+                    codigo_clima_max=fila[2],
+                    temperatura_2m_max=fila[3],
+                    temperatura_2m_min=fila[4],
+                    suma_precipitacion=fila[5],
+                    id_localizacion=id_localizacion
                 )
-                for row in rows
+                for fila in filas
             ]
         finally:
-            conn.close()
+            conexion.close()

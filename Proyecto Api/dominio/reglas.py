@@ -78,11 +78,11 @@ class MotorRecomendacion:
         """
         Evalúa las reglas de negocio sobre el análisis climático y genera recomendaciones de plantas.
         """
-        stats = cls.analizar_clima(registros_diarios)
-        t_prom = stats["temperatura_promedio"]
-        t_min = stats["temperatura_min_promedio"]
-        t_max = stats["temperatura_max_promedio"]
-        frec_lluvia = stats["frecuencia_lluvia_pct"]
+        estadisticas = cls.analizar_clima(registros_diarios)
+        t_prom = estadisticas["temperatura_promedio"]
+        t_min = estadisticas["temperatura_min_promedio"]
+        t_max = estadisticas["temperatura_max_promedio"]
+        frec_lluvia = estadisticas["frecuencia_lluvia_pct"]
 
         recomendaciones = []
 

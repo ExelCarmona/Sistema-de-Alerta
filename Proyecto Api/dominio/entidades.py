@@ -23,7 +23,7 @@ class ClimaActual:
     humedad_relativa_2m: Optional[float] = None
     codigo_clima: Optional[int] = None
     velocidad_viento_10m: Optional[float] = None
-    localizacion_id: Optional[int] = None
+    id_localizacion: Optional[int] = None
 
 @dataclass
 class ClimaHorario:
@@ -35,7 +35,7 @@ class ClimaHorario:
     probabilidad_precipitacion: Optional[float] = None
     precipitacion: Optional[float] = None
     codigo_clima: Optional[int] = None
-    localizacion_id: Optional[int] = None
+    id_localizacion: Optional[int] = None
     id: Optional[int] = None
 
 @dataclass
@@ -48,7 +48,7 @@ class ClimaDiario:
     temperatura_2m_max: Optional[float] = None
     temperatura_2m_min: Optional[float] = None
     suma_precipitacion: Optional[float] = None
-    localizacion_id: Optional[int] = None
+    id_localizacion: Optional[int] = None
     id: Optional[int] = None
 
 @dataclass

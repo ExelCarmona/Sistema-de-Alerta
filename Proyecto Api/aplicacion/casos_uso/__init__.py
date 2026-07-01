@@ -1,0 +1,4 @@
+from .consultar_clima import CasoUsoConsultarClima
+from .obtener_recomendaciones import CasoUsoObtenerRecomendaciones
+from .registrar_clima_manual import CasoUsoRegistrarClimaManual
+from .sincronizar_clima import CasoUsoSincronizarClima
